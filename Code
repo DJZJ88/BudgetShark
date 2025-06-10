@@ -1,0 +1,131 @@
+from datetime import datetime
+import matplotlib.pyplot as plt 
+from collections import defaultdict
+
+date_format = "%d-%m-%Y"
+expenses = []
+budgets = {}
+
+def main():
+    while True:
+        print("\nChart your spending waters -- Budget Shark keeps you on course!")
+        print("Please select what would you like to do today? ")
+        print("1. Add Expense")
+        print("2. Set Budgets for each category")
+        print("3. Show me my budgeting performance")
+        print("4. Exit Budget Shark")
+        selection = input("Enter your choice: ")
+
+        if selection == "1":
+            create_expense()
+        elif selection == "2":
+            set_budget()
+        elif selection == "3": 
+            try:
+                month = int(input("Enter a month for summary report (values should be 01-12): "))
+                year = int(input("Enter a year for summary report (for eg: 2025): "))
+                summary(month,year)
+            except ValueError:
+                print("Invalid month or year inputted, please try again.")
+        elif selection == "4": 
+            print("Ok, Goodbye!")
+            break
+        else: 
+            print("Invalid choice. Please try again.")
+                       
+
+def get_valid_date():
+    
+    while True: 
+        date_input = input("Enter date(DD-MM-YYYY): ")
+        try: 
+            datetime.strptime(date_input,date_format)
+        except ValueError:
+            print("Invalid date or date format. Please try again")
+            continue    
+        return date_input  
+
+
+def get_valid_amount():
+    while True: 
+        amount = input("Enter amount: ")
+        try:
+            expense_amount = float(amount)
+            if 0<expense_amount: 
+                return expense_amount
+            else: 
+                print("Please enter a positive amount.")
+        except ValueError: 
+            print("Invalid amount, input must contain numbers. Please try again")
+
+def get_valid_budget_amount():
+    while True: 
+        b_amount = input("Enter monthly budget amount for this category: ")
+        try:
+            budget_amount = float(b_amount)
+            if 0<budget_amount: 
+                return budget_amount
+            else: 
+                print("Please enter a positive amount.")
+        except ValueError: 
+            print("Invalid amount, input must contain numbers. Please try again")
+
+def create_expense():
+    print("\nCreating new expense")
+    date_str = get_valid_date()
+    date = datetime.strptime(date_str,date_format).date()
+    category = input("Enter category: ")
+    amount = get_valid_amount()
+    description = input("Enter description(optional): ")
+
+    expenses.append({"date" : date, "category": category, "amount": amount, "description": description})
+    print(expenses)
+    print("Expense created")
+
+def set_budget():
+    print("\nsetting monthly budget by categories")
+    while True: 
+        category_input = input("Enter a category(keep this blank and press enter if you would like to stop inputting new category budget): ")
+        if category_input == "":
+            break
+        else: 
+            final_budget = get_valid_budget_amount()
+        budgets[category_input] = final_budget
+    print(budgets)
+    print("Budgets for each category has been created")
+
+def summary(month: int,year: int):
+    print("\nExpense Summary for chosen month")
+    total_category_expense = defaultdict(float)
+    for e in expenses: 
+        date = e["date"]
+        if isinstance(date,str):
+            try:
+                date = datetime.strptime(date, date_format).date()
+                e["date"] = date
+            except ValueError: 
+                continue
+        if date.year == year and date.month == month: 
+            total_category_expense[e["category"]] += e["amount"]
+        #if e["date"].month == month and e["date"].year == year:
+            #total_category_expense[e["category"]]+= e["amount"]
+    
+    for cat, total in total_category_expense.items():
+        budget = budgets.get(cat,0)
+        print(f"{cat}: Spent: ${total:.2f} | Budget: ${budget:.2f} -> {"over" if total>budget else "Under"}")
+        print(total_category_expense)
+    if total_category_expense: 
+        plt.figure(figsize=(6,6))
+        plt.title(f"Expense summary for {month:02d}, {year}")
+        print("Pie chart data:",total_category_expense)
+        plt.pie(total_category_expense.values(), labels = total_category_expense.keys(), autopct='%1.1f%%', startangle=140)
+        plt.axis("equal")
+        plt.show()
+        plt.tight_layout
+        plt.show(block=True)
+    else:
+        print("No expense data was stored for the month specified.")
+    
+if __name__ == '__main__':
+    main()
+
